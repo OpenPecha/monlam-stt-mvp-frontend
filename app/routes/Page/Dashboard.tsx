@@ -1,6 +1,7 @@
 import React from 'react'
 import NewProjectPopup from '../../Component/NewProjectPopup';
 import search from '../../assets/images/search.png'
+import ExportPopup from '../../Component/ExportPopup';
 
 const Dashboard = () => {
 
@@ -38,6 +39,7 @@ const Dashboard = () => {
     const [projects, setProjects] = React.useState([...data]);
 
     const [newProject, setNewProject] = React.useState<boolean>(false);
+    const [exportPopup, setExportPopup] = React.useState<boolean>(false);
 
     const handlechange = (event: any) => {
         const value = (event.target.value)
@@ -60,7 +62,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-            <div className=' flex items-center border border-grey rounded-lg p-2 bg-green-600 text-white ml-10 cursor-pointer' onClick={() => setNewProject(true)}>
+            <div className=' transition-all duration-300 flex items-center border border-grey rounded-lg p-2 bg-green-600 text-white ml-10 cursor-pointer hover:opacity-85 active:opacity-70' onClick={() => setNewProject(true)}>
                 New Project 
             </div>
             {newProject ? <NewProjectPopup setPopup={setNewProject} /> : null}
@@ -103,13 +105,18 @@ const Dashboard = () => {
                     <div className=' w-1/4'>
                         
                     <button 
-                        disabled={project.status === 'Finished'} 
+                        onClick={() => {
+                            {project.status === 'Finished' ? setExportPopup(() => true) : null}
+                            }
+                        }
+                        disabled={project.status !== 'Finished'} 
                         className={`p-2 rounded-lg w-24 ${
                             project.status !== 'Finished' 
                             ? 'bg-gray-400 text-gray-200 cursor-not-allowed' // disabled state
                             : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer' // enabled state
                         }`}
                     >Export</button>
+                    {exportPopup ? <ExportPopup setPopup={setExportPopup} /> : null}
                     </div>
                 </div>
             ))}
