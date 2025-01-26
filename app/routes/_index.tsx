@@ -2,7 +2,7 @@ import Navbar from '~/Component/Navbar';
 import hero from '~/assets/images/hero.png';
 import logo from '~/assets/images/logo.png';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from '@remix-run/react';
+import { redirect, useNavigate } from '@remix-run/react';
 import { createCookie } from "@remix-run/node";
 import { useEffect } from 'react';
 
@@ -12,7 +12,11 @@ const BACKEND_URL = 'http://127.0.0.1:8000';
 
 export default function Index() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, loginWithRedirect } = useAuth0();
+  const { user, loginWithRedirect } = useAuth0();
+  
+  if (user !== undefined) {
+    navigate('/dashboard');
+  }
   
   const data = {
     email: user?.email || '',
@@ -38,7 +42,7 @@ export default function Index() {
 
         const data = await response.json();
         console.log(data);
-        navigate('/dashboard');
+        redirect('/dashboard');
       }
     } catch (error) {
       navigate(0);
@@ -46,7 +50,7 @@ export default function Index() {
     }
   }
   useEffect(() => {
-    if (isAuthenticated) {
+    if (user !== undefined) {
       register();
     }
   }, [user]);

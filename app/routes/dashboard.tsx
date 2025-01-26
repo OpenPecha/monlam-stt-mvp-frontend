@@ -26,15 +26,14 @@ const Dashboard = () => {
     const navigate = useNavigate()
     const { user, isAuthenticated } = useAuth0()
     
-    
     const [project, setProject] = React.useState<Project[]>([]);
     const [data, setData] = React.useState<Project[]>([]);
     const [newProject, setNewProject] = React.useState<boolean>(false);
     const [exportPopup, setExportPopup] = React.useState<boolean>(false);
     
     React.useEffect(() => { // check if user login or not and if login then get the project list
-        if (!isAuthenticated) {
-            navigate('/')
+        if (user === undefined) {
+            return;
         } else {
             const url = `${BACKEND_URL}/projects/${user?.email}`;
             const response = fetch(url, {
