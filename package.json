@@ -11,12 +11,21 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.3.0",
     "@remix-run/node": "^2.15.2",
     "@remix-run/react": "^2.15.2",
     "@remix-run/serve": "^2.15.2",
+    "auth0-remix-server": "^2.3.16",
+    "axios": "^1.7.9",
+    "cookie": "^1.0.2",
+    "dotenv": "^16.4.7",
     "isbot": "^4.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-audio-player": "^0.17.0",
+    "react-dom": "^18.2.0",
+    "react-h5-audio-player": "^3.10.0-rc.1",
+    "remix-auth-auth0": "^1.10.0",
+    "require": "^2.4.20"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.15.2",

@@ -1,8 +1,17 @@
 import React, { useEffect } from 'react'
 import DropDown from './DropDown';
+import { useNavigate } from '@remix-run/react';
+import Loading from './Loading';
 
 type NewProjectPopupProps = {
     setPopup: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface ProjectData {
+    email: string;
+    project_name: string;
+    model: string;
+    file: File;
 }
 
 type DataType = {
@@ -10,8 +19,13 @@ type DataType = {
     file: File | null;
     model: string;
 }
+
+const BACKEND_URL = 'http://127.0.0.1:8000';
+const email = 'tenzintsering630@gmail.com';
+
 const NewProjectPopup = ({setPopup} : NewProjectPopupProps) => {
 
+    const navigate = useNavigate();
 
     const [data, setData] = React.useState<DataType>({
         project_name: '',
@@ -19,9 +33,11 @@ const NewProjectPopup = ({setPopup} : NewProjectPopupProps) => {
         model: '',
     });
     
-    const [modelOption, setModelOption] = React.useState<string[]>(['Mitra', 'Melong']);
+    const [modelOption, setModelOption] = React.useState<string[]>([]);
     const [modelDropDown, setModelDropDown] = React.useState<boolean>(false);
     const [selectedModel, setSelectedModel] = React.useState<string>('Select a Model');
+    const [disableSubmit, setDisableSubmit] = React.useState<boolean>(false);
+    const [loading ,setLoading] = React.useState<boolean>(false);
 
     const [alertProjectName, setalertProjectName] = React.useState<string>('');
     const [alertFile, setalertFile] = React.useState<string>('');
@@ -29,29 +45,58 @@ const NewProjectPopup = ({setPopup} : NewProjectPopupProps) => {
 
     const project_name_ref = React.useRef<HTMLInputElement>(null);
 
-    const submiteData = () => {
-        let check = true
-        if (data.project_name === '') {
-            setalertProjectName('Project Name is required');
-            check = false;
-        } else {
-            setalertProjectName('');
-        } 
-        if (data.file === null) {
-            setalertFile('File is required');
-            check = false;
-        } else {
-            setalertFile('');
-        } 
-        if (data.model === '') {
-            setalertModel('Model is required');
-            check = false;
-        } else {
-            setalertModel('');
+    const submiteData = async () => {
+
+        setLoading(true);
+
+        setDisableSubmit(true);
+        let check = true;
+    
+        try {
+            // Form validation
+            if (data.project_name.trim() === '') {
+                setalertProjectName('Project name is required');
+                check = false;
+            }
+            if (!data.file) {
+                setalertFile('File is required');
+                check = false;
+            }
+            if (!check) {
+                setDisableSubmit(false);
+                return;
+            }
+    
+            // Create FormData
+            const formData = new FormData();
+            formData.append('file', data.file!);
+
+            formData.append('email', email)
+            formData.append('project_name', data.project_name.replace(/\s+/g, '_'))
+            formData.append('model', data.model)
+    
+            // Send request
+            const response = await fetch(`${BACKEND_URL}/projects/create`, {
+                method: 'POST',
+                body: formData
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            // Handle success
+            navigate(0);
+            setLoading(false);
+            setPopup(false);
+            
+        } catch (error) {
+            setLoading(false)
+            alert(`Error: ${error}`);
+            console.error('Error:', error);
+            setDisableSubmit(false);
         }
-        if (!check) return;
-        console.log(data);
-    }
+    };
 
     const project_name_change = () => {
         setData((prev) => ({ ...prev, project_name: project_name_ref.current!.value }));
@@ -96,7 +141,7 @@ const NewProjectPopup = ({setPopup} : NewProjectPopupProps) => {
             </div>
             <span className='text-red-600'>{alertFile}</span>
             
-            <div className=' mt-4'>Select STT Model <span className='text-red-600'>*</span></div>
+            <div className=' mt-4'>Select STT Model</div>
             <div className=' h-11 cursor-pointer border border-gray-300 rounded pl-4 pt-2 mt-2' onClick={() => setModelDropDown(!modelDropDown)}>    
                 {selectedModel}
             </div>
@@ -104,6 +149,7 @@ const NewProjectPopup = ({setPopup} : NewProjectPopupProps) => {
             {modelDropDown ? <DropDown data={modelOption} select={setSelectedModel} dropdown={setModelDropDown}/> : null}
             <div className=' flex items-center justify-between mt-4'>
                 <button
+                    disabled={disableSubmit}
                     onClick={() => {
                         submiteData();
                     }}
@@ -118,6 +164,7 @@ const NewProjectPopup = ({setPopup} : NewProjectPopupProps) => {
                     Close
                 </button>
             </div>
+            {loading ? <Loading /> : null}
           </div>
     </div>
   )
