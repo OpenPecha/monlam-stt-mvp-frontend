@@ -3,33 +3,50 @@ import Navbar from "~/Component/Navbar";
 import React, { act, useRef, useState } from 'react';
 import 'react-h5-audio-player/lib/styles.css';
 import Loading from "~/Component/Loading";
+import { BiSolidCommentAdd } from "react-icons/bi";
+import { IoPlayCircle } from "react-icons/io5";
 
 const BACKEND_URL = 'http://127.0.0.1:8000';
 
 export async function loader({ params }: { params: { id: string } }) {
-    const url = `${BACKEND_URL}/projects/audiosegments/${params.id}`;
+    const url = `${BACKEND_URL}`;
     console.log(url)
-    const response = await fetch(url, {
+    const response = await fetch(`${url}/projects/audiosegments/${params.id}`, {
         method: "GET"
     }).then(response => response.json());
 
-    return response;
+    const link = await fetch(`${url}/projects/audiolink/${params.id}`, {
+        method: "GET"
+    }).then(response => response.json());
+
+    const data = {
+        response,
+        link
+    }
+
+
+    return data;
 }
 
 type LoaderData = {
-    project_id: string;
-    start_time: string;
-    end_time: string;
-    transcription: string;
-    comments: string;
-}[];
+    response: {
+        project_id: string;
+        start_time: string;
+        end_time: string;
+        transcription: string;
+        comments: string;
+    }[];
+    link: {
+        audio_link: string;
+    };
+};
 
 const Edit = () => {
 
     const data = useLoaderData<LoaderData>();
     // We'll store the transcription data in the state
-    const [defaultTranscription, setDefaultTranscription] = useState(structuredClone(data));
-    const [transcriptions, setTranscriptions] = useState(structuredClone(data));
+    const [defaultTranscription, setDefaultTranscription] = useState(structuredClone(data.response));
+    const [transcriptions, setTranscriptions] = useState(structuredClone(data.response));
     const [changes, setChanges] = useState(false);
     const [AudioPlayer, setAudioPlayer] = useState<any>(null);
     const [currentTime, setCurrentTime] = useState(-1);
@@ -42,20 +59,6 @@ const Edit = () => {
           setAudioPlayer(() => mod.default);
         });
     }, []);
-
-    React.useEffect(() => {
-        const activeIndex = transcriptions.findIndex(
-            (item) => {
-                return parseFloat(String(currentTime)) >= parseFloat(item.start_time) && parseFloat(String(currentTime)) < parseFloat(item.end_time);
-            }
-        );
-        if (activeIndex !== -1 && transcriptionRefs.current[activeIndex]) {
-            transcriptionRefs.current[activeIndex].scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-            });
-        }
-    }, [currentTime])
 
     const playerRef = React.useRef<any>(null);
     if (!AudioPlayer) {
@@ -104,8 +107,9 @@ const Edit = () => {
     }
 
     const handlelisten = (currentTime: any) => {
+        console.log('my time ', currentTime)
         if (playerRef.current) {
-            console.log(currentTime)
+            setCurrentTime(() => currentTime);
             playerRef.current.audio.current.currentTime = currentTime;
             playerRef.current.audio.current.play();
         }
@@ -113,9 +117,20 @@ const Edit = () => {
 
 
     const handleHighlight = (e: any) => {
-        const currentTime = e.target.currentTime;
-        const formattedTime = currentTime.toFixed(1);
-        setCurrentTime(formattedTime);
+        console.log('audio Time: ', e.target.currentTime);
+        setCurrentTime(() => e.target.currentTime);
+        const nowTime = e.target.currentTime;
+        const activeIndex = transcriptions.findIndex(
+            (item) => {
+                return parseFloat(String(nowTime)) >= parseFloat(item.start_time) && parseFloat(String(currentTime)) <= parseFloat(item.end_time);
+            }
+        );
+        if (activeIndex !== -1 && transcriptionRefs.current[activeIndex]) {
+            transcriptionRefs.current[activeIndex].scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+        }
     }
 
     return (
@@ -125,37 +140,40 @@ const Edit = () => {
                 <AudioPlayer 
                     ref={playerRef}
                     autoPlay={false}
-                    src="https://monlam-ai-web-testing.s3.ap-south-1.amazonaws.com/1737786666481-movie_audio.mp3"
+                    src={data.link.audio_link}
                     onListen={((e: any) => handleHighlight(e))}
                 />
             </div>
             {loading ? <Loading /> : ''}
-            <div className=" flex space-x-56 pl-10 pt-2">
+            <div className=" flex pl-10 pt-2">
                 <h1 className=" text-2xl">Project Name</h1>
-                <button disabled={!changes} className=" flex items-center pl-6 pr-6 pt-2 pb-2 rounded-lg bg-green-500 border border-black hover:bg-green-600 cursor-pointer active:opacity-60 active:mt-2 transition-all duration-300" onClick={update}>Save</button>
+                <button disabled={!changes} className=" ml-28 flex items-center pl-6 pr-6 pt-2 pb-2 rounded-lg bg-green-500 border border-black hover:bg-green-600 cursor-pointer active:opacity-60 active:mt-2 transition-all duration-300" onClick={update}>Save</button>
             </div>
 
             <div className="flex p-10">
-                <div className="w-1/4">
-                    <h1 className="font-semibold text-2xl">Time Stamp</h1>
+                <div className="w-[18%]">
+                    <h1 className="font-semibold text-2xl pl-4">Time Stamp</h1>
                 </div>
                 <div className="w-3/4">
                     <h1 className="font-semibold text-2xl">Transcription</h1>
                 </div>
             </div>
             {transcriptions.map((item, index) => (
-                <div className=" pl-12 mb-4 pr-12">
-                    <div key={index} ref={(el) => (transcriptionRefs.current[index] = el)} className={`flex pl-4 pb-2 ${parseFloat(String(currentTime)) >= parseFloat(item.start_time) && parseFloat(String(currentTime)) < parseFloat(item.end_time) ? ' border-2 border-yellow-500 rounded-xl' : ''}`}>
-                        <div className="w-1/4 flex justify-between items-center">
-                            <div className=" cursor-pointer text-xl" onClick={() => handlelisten(item.start_time)}>{item.start_time}</div>
+                <div className=" pl-12 pr-12">
+                    <div key={index} ref={(el) => (transcriptionRefs.current[index] = el)} className={`flex pl-4 pb-2 ${parseFloat(String(currentTime)) >= parseFloat(item.start_time) && parseFloat(String(currentTime)) <= parseFloat(item.end_time) ? ' border-2 border-yellow-500 rounded-xl' : ''}`}>
+                        <div className="w-[18%] flex justify-between items-center">
+                            <div className=" flex items-center cursor-pointer text-xl" onClick={() => handlelisten(item.start_time)}>
+                                <IoPlayCircle  /><span className=" ml-2">{new Date(parseFloat(item.start_time) * 1000).toISOString().substr(11, 8)}</span>
+                            </div>
                         </div>
-                        <div className="w-3/4 text-xl mt-2">
+                        <div className="flex w-3/4 mt-2 group">
                             <input
                                 type="text"
                                 value={item.transcription}
-                                onChange={(e) => handleTranscriptionChange(index, e.target.value)} // Update transcription
-                                className="w-3/4 p-2 pb-3 rounded-lg outline-none border border-dashed border-black"
+                                onChange={(e) => handleTranscriptionChange(index, e.target.value)}
+                                className="h-full w-3/4 font-monlam p-2 rounded-lg outline-none border border-dashed border-black"
                             />
+                            <BiSolidCommentAdd className="cursor-pointer ml-2 mt-1 hidden group-hover:block" />
                         </div>
                     </div>
                 </div>

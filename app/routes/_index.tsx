@@ -3,7 +3,7 @@ import hero from '~/assets/images/hero.png';
 import logo from '~/assets/images/logo.png';
 import { useAuth0 } from '@auth0/auth0-react';
 import { redirect, useNavigate } from '@remix-run/react';
-import { createCookie } from "@remix-run/node";
+import { FcGoogle } from "react-icons/fc";
 import { useEffect } from 'react';
 
 
@@ -13,10 +13,6 @@ const BACKEND_URL = 'http://127.0.0.1:8000';
 export default function Index() {
   const navigate = useNavigate()
   const { user, loginWithRedirect } = useAuth0();
-  
-  if (user !== undefined) {
-    navigate('/dashboard');
-  }
   
   const data = {
     email: user?.email || '',
@@ -39,10 +35,8 @@ export default function Index() {
         }),
       });
       if (response.ok) {
-
         const data = await response.json();
         console.log(data);
-        redirect('/dashboard');
       }
     } catch (error) {
       navigate(0);
@@ -52,12 +46,13 @@ export default function Index() {
   useEffect(() => {
     if (user !== undefined) {
       register();
+      navigate('/dashboard');
     }
   }, [user]);
 
   return (
     <>
-        {/* <Auth0Provider domain="dev-vz6o17motc18g45h.us.auth0.com" clientId="RHBKvxr8sWksscmmGZMSlXDbJP2UsVNx" authorizationParams={{redirect_uri: "http://localhost:5173/"}} cacheLocation="localstorage" useRefreshTokens={true}> */}
+        {user === undefined ? <>
           <Navbar />
           <div className=' flex w-full justify-center items-center'>
             <div>
@@ -71,11 +66,11 @@ export default function Index() {
                 <h2>SIGN UP / SIGN IN IN ACCOUNT</h2>
               </div>
               <div className=' flex items-center justify-center mt-4'>
-                <button className=' border border-black transition-all duration-400 bg-white text-black p-2 rounded-lg hover:text-white hover:bg-black active:opacity-60' onClick={e => loginWithRedirect()}>Google</button>
+                <button className=' flex items-center relative border border-black transition-all duration-400 bg-white text-black p-2 pl-4 pr-4 rounded-lg hover:text-white hover:bg-black active:opacity-60' onClick={e => loginWithRedirect()}><FcGoogle /> <span className=' ml-2'>Google</span></button>
               </div>
             </div>
           </div>
-        {/* </Auth0Provider> */}
+          </>: ''}
     </>
   );
 }
