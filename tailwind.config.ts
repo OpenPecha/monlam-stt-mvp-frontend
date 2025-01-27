@@ -5,6 +5,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        monlam: ["Monlam", "sans-serif", "serif","Poppins"],
         sans: [
           "Inter",
           "ui-sans-serif",
