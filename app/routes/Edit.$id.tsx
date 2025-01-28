@@ -1,4 +1,4 @@
-import { useLoaderData } from "@remix-run/react"
+import { Link, Outlet, useLoaderData } from "@remix-run/react"
 import Navbar from "~/Component/Navbar";
 import React, { act, useRef, useState } from 'react';
 import 'react-h5-audio-player/lib/styles.css';
@@ -52,6 +52,7 @@ const Edit = () => {
     const [currentTime, setCurrentTime] = useState(-1);
     const [loading, setLoading] = useState(false);
     const transcriptionRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const [outlet, setOutlet] = useState<number>(-1);
 
     React.useEffect(() => {
         // Dynamically import so it only runs on the client
@@ -173,7 +174,12 @@ const Edit = () => {
                                 onChange={(e) => handleTranscriptionChange(index, e.target.value)}
                                 className="h-full w-3/4 font-monlam p-2 rounded-lg outline-none border border-dashed border-black"
                             />
-                            <BiSolidCommentAdd className="cursor-pointer ml-2 mt-1 hidden group-hover:block" />
+                            <Link to={`${index+1}`} onClick={() => setOutlet(index)}>
+                                <BiSolidCommentAdd size={24} className="cursor-pointer ml-2 mt-1 hidden group-hover:block" />
+                            </Link>
+                            <div>
+                                {outlet !== -1 && index === outlet ? <Outlet /> : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
